@@ -1,0 +1,76 @@
+# Doxyfile configuration for Hardware Verification Project
+# This is a basic configuration that can be extended
+
+PROJECT_NAME           = "Hardware Verification Project"
+PROJECT_NUMBER         = "1.0"
+PROJECT_BRIEF          = "RTL, SystemC/TLM, and UVM-ML Verification Framework"
+
+OUTPUT_DIRECTORY       = docs/_build
+OUTPUT_LANGUAGE        = English
+
+# Extraction settings
+EXTRACT_ALL            = YES
+EXTRACT_PRIVATE        = NO
+EXTRACT_STATIC         = YES
+EXTRACT_LOCAL_CLASSES  = YES
+
+# Input files
+INPUT                  = rtl models verification/uvm_ml common
+FILE_PATTERNS          = *.sv *.svh *.cpp *.h *.hpp *.md
+RECURSIVE              = YES
+
+# Source browser settings
+SOURCE_BROWSER         = YES
+INLINE_SOURCES         = YES
+
+# HTML output
+GENERATE_HTML          = YES
+HTML_OUTPUT            = html
+HTML_COLORSTYLE_HUE    = 220
+HTML_COLORSTYLE_SAT    = 100
+HTML_COLORSTYLE_GAMMA  = 80
+
+# LaTeX output (optional)
+GENERATE_LATEX         = NO
+
+# Diagram generation (requires dot)
+HAVE_DOT               = YES
+CLASS_GRAPH            = YES
+COLLABORATION_GRAPH    = YES
+INCLUDE_GRAPH          = YES
+INCLUDED_BY_GRAPH      = YES
+CALL_GRAPH             = YES
+CALLER_GRAPH           = YES
+DOT_PATH               = /usr/bin/dot
+
+# Optimization
+OPTIMIZE_FOR_FORTRAN   = NO
+OPTIMIZE_OUTPUT_FOR_C  = YES
+OPTIMIZE_OUTPUT_JAVA   = NO
+
+# Extensions for different languages
+EXTENSION_MAPPING      = sv=C++ svh=C++
+
+# Filter settings (optional - for custom preprocessing)
+# FILTER_PATTERNS       = *.sv=sv_filter.py
+
+# Example settings
+EXAMPLE_PATH           = examples
+EXAMPLE_PATTERNS       = *
+EXAMPLE_RECURSIVE      = YES
+
+# Alphabetical class index
+ALPHABETICAL_INDEX     = YES
+COLS_IN_ALPHA_INDEX    = 3
+
+# Ignore certain files or directories
+EXCLUDE_PATTERNS       = */build/* */simulation/* */work/*
+
+# Additional configuration
+QUIET                  = NO
+WARNINGS               = YES
+WARN_IF_UNDOCUMENTED   = YES
+WARN_IF_DOC_ERROR      = YES
+
+# Timestamp format
+TIMESTAMP              = YES
