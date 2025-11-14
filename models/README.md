@@ -5,8 +5,8 @@ This directory contains C/C++ and SystemC models at various abstraction levels.
 ## Structure
 ```
 models/
+├── c_reference/  # Pure C reference models and unit tests
 ├── tlm/          # Transaction-Level Models (TLM 2.0)
-├── c_models/     # Pure C/C++ reference models
 ├── systemc/      # SystemC implementation models
 └── README.md     # This file
 ```
@@ -19,11 +19,10 @@ models/
 - Fast functional simulation
 - Early architecture exploration
 
-### C Models
-- Reference implementations
-- Bit-accurate behavioral models
-- Algorithm verification
-- Performance estimation
+### C Reference Models (c_reference/)
+- Bit-accurate reference implementations in portable C
+- Host-friendly APIs for algorithm and RTL parity validation
+- Includes standalone regression tests runnable via `make c_reference`
 
 ### SystemC Models
 - Cycle-accurate models
@@ -45,7 +44,7 @@ models/
 
 ## TODO
 - [ ] Create TLM 2.0 base models
-- [ ] Implement reference C models
+- [x] Implement reference C models
 - [ ] Develop SystemC behavioral models
 - [ ] Set up model integration framework
 - [ ] Add model validation tests
