@@ -1,0 +1,130 @@
+# Compiled simulation artifacts
+*.vvp
+*.vcd
+*.vpd
+*.fsdb
+*.wlf
+*.shm
+*.sim
+*.run
+*.dsn
+*.log
+
+# Synthesis and implementation files
+*.edf
+*.edif
+*.ngc
+*.ngd
+*.bit
+*.bin
+*.mcs
+*.jed
+
+# Temporary files
+*.tmp
+*.temp
+*~
+*.swp
+*.swo
+.DS_Store
+Thumbs.db
+
+# Build artifacts and object files
+*.o
+*.so
+*.a
+*.exe
+*.out
+*.d
+
+# ModelSim/Questa artifacts
+work/
+modelsim.ini
+transcript
+*.wlf
+*.mti
+*.do
+
+# VCS artifacts
+*.daidir
+*.csrc
+*.simv
+*.simv.d
+*.vcs.key
+*.ucli.key
+urgReport/
+DVEfiles/
+
+# Xcelium artifacts
+*.xcelium.d
+*.log
+*.history
+*.asdb
+*.wdb
+
+# Questa/ModelSim specific
+*.wlf
+*.vstf
+*.ucdb
+
+# SystemC/TLM artifacts
+*.so
+*.dylib
+*.dll
+
+# Python artifacts (if used for scripting)
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+
+# IDE files
+.vscode/
+.idea/
+*.sublime-*
+.cproject
+.project
+
+# Documentation build
+docs/_build/
+docs/build/
+
+# Coverage reports
+coverage/
+cov_report/
+*.cov
+
+# UVM specific
+uvm_pkg.sv
+uvm_macros.svh
+
+# Temporary simulation directories
+sim/
+simulation/
+run/
+tmp/
+
+# Makefile artifacts
+*.mk.bak
+Makefile.bak
+
+# Auto-generated files
+*.auto
+*.gen
+*.auto.*
