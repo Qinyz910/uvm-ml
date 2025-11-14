@@ -1,6 +1,6 @@
 # Hardware Verification Project
 
-This repository contains a comprehensive hardware verification framework that integrates RTL design, SystemC/TLM modeling, and UVM-based verification components.
+This repository contains a comprehensive hardware verification framework that integrates RTL design, SystemC/TLM modeling, and UVM-based verification components with end-to-end DPI connectivity.
 
 ## Project Goals
 
@@ -8,6 +8,7 @@ This repository contains a comprehensive hardware verification framework that in
 - Support multiple abstraction levels from RTL to transaction-level modeling
 - Enable reusable verification components using UVM methodology
 - Facilitate co-simulation between SystemVerilog and SystemC components
+- Deliver complete end-to-end verification flow with automated regression
 
 ## Repository Structure
 
@@ -15,26 +16,31 @@ This repository contains a comprehensive hardware verification framework that in
 .
 ├── rtl/                    # Register-Transfer Level designs
 │   ├── src/               # RTL source files
+│   │   ├── memory.sv      # Main memory module with TLB
+│   │   └── memory_dpi_bridge.sv  # DPI bridge wrapper
 │   ├── include/           # Header files and packages
 │   └── tb/                # Testbench components
 ├── verification/          # Verification environment
 │   └── uvm_ml/           # UVM-ML (Multi-Language) components
 │       ├── agents/       # UVM agents
+│       │   └── mem_agent/  # Memory agent with DPI driver
 │       ├── envs/         # UVM environments
 │       ├── sequences/    # Test sequences
-│       └── tests/        # Test cases
+│       ├── tests/        # Test cases
+│       └── tb/           # Integrated testbenches
 ├── models/               # C/C++ and SystemC models
 │   ├── tlm/             # Transaction-Level Models
-│   ├── c_models/        # Pure C/C++ reference models
+│   │   ├── include/      # DPI bridge and transactors
+│   │   └── src/         # TLM implementations
+│   ├── c_reference/      # Pure C/C++ reference models
 │   └── systemc/         # SystemC implementation models
 ├── common/              # Shared utilities and interfaces
-│   ├── interfaces/      # Common interface definitions
-│   ├── utils/           # Utility functions and packages
-│   └── scripts/         # Build and utility scripts
+│   ├── memory_dpi.h     # DPI interface header
+│   └── memory_dpi.c     # DPI implementation
+├── scripts/             # Automation scripts
+│   ├── run_regression.sh  # Full regression suite
+│   └── quick_test.sh     # Quick validation
 ├── docs/                # Documentation
-│   ├── design/          # Design specifications
-│   ├── verification/    # Verification plans and reports
-│   └── api/             # API documentation
 ├── Makefile            # Build orchestration
 └── README.md           # This file
 ```
@@ -50,110 +56,323 @@ This repository contains a comprehensive hardware verification framework that in
 - **Make**: GNU Make 3.8+ or equivalent
 
 ### Optional Tools
-- **Python 3.6+**: For utility scripts and automation
 - **Doxygen**: For API documentation generation
-- **Coverage Tools**: For code coverage analysis
+- **Python 3.8+**: For additional scripts and utilities
 
-## Build and Simulation
+## Quick Start
 
-### Prerequisites Setup
-
-1. Ensure SystemC environment variables are set:
-   ```bash
-   export SYSTEMC_HOME=/path/to/systemc-2.3.3
-   export LD_LIBRARY_PATH=$SYSTEMC_HOME/lib-linux64:$LD_LIBRARY_PATH
-   ```
-
-2. Set UVM-ML environment:
-   ```bash
-   export UVM_ML_HOME=/path/to/uvm-ml
-   ```
-
-### Build Commands
+### 1. Environment Setup
 
 ```bash
-# Build all components
+# Set SystemC installation path
+export SYSTEMC_HOME=/usr/local/systemc-2.3.3
+
+# Set UVM-ML installation path (optional)
+export UVM_ML_HOME=/opt/uvm-ml
+
+# Set preferred simulator
+export SIMULATOR=vcs  # or questa, xcelium
+```
+
+### 2. Quick Validation Test
+
+```bash
+# Run quick validation to verify setup
+./scripts/quick_test.sh
+```
+
+This script validates:
+- C reference model compilation and tests
+- TLM component building
+- UVM environment compilation
+- Basic smoke test execution
+- DPI interface compilation
+
+### 3. Build All Components
+
+```bash
+# Build everything
 make all
 
-# Build individual components
-make rtl          # Compile RTL designs
-make models       # Build SystemC/C++ models
-make verification # Compile UVM verification environment
-
-# Clean build artifacts
-make clean
-make distclean   # Remove all generated files
+# Or build specific components
+make rtl           # Build RTL designs
+make models        # Build SystemC/TLM models
+make models-dpi    # Build DPI-enabled models
+make verification  # Build UVM verification environment
+make c_reference   # Build C reference model
 ```
 
-### Simulation Commands
+### 4. Run Verification
+
+#### Quick Smoke Test
+```bash
+make sim-uvm UVM_TESTNAME=smoke_test
+```
+
+#### Full Regression Suite
+```bash
+./scripts/run_regression.sh
+```
+
+#### Specific Test Types
+```bash
+# Smoke tests only
+./scripts/run_regression.sh --smoke-only
+
+# Random tests with specific seed
+./scripts/run_regression.sh --random-only -r 12345
+
+# With waveform generation
+./scripts/run_regression.sh -w
+```
+
+## Detailed Verification Flow
+
+### 1. RTL Design Integration
+
+The verification flow starts with the RTL memory module (`rtl/src/memory.sv`) which provides:
+
+- **Virtual-to-Physical Address Translation**: Using page table-based TLB
+- **Read/Write Operations**: With byte-level masking and status reporting
+- **TLB Management**: Runtime loading of translation entries
+- **Error Handling**: Translation miss and access violation detection
+
+### 2. DPI Bridge Connection
+
+The DPI bridge (`rtl/src/memory_dpi_bridge.sv`) provides a C-callable interface:
+
+```c
+// Read operation via DPI
+mem_dpi_status_e memory_dpi_read(uint64_t virt_addr, uint8_t byte_mask, 
+                                uint64_t* data, uint32_t* timestamp);
+
+// Write operation via DPI
+mem_dpi_status_e memory_dpi_write(uint64_t virt_addr, uint8_t byte_mask,
+                                 uint64_t data, uint32_t* timestamp);
+
+// TLB load operation via DPI
+mem_dpi_status_e memory_dpi_tlb_load(uint64_t virt_base, uint64_t phys_base,
+                                     uint32_t* timestamp);
+```
+
+### 3. TLM Environment
+
+The TLM environment (`models/tlm/`) provides:
+
+- **MemoryInitiator**: Generates transactions from test scenarios
+- **MemoryDPIBridge**: Connects TLM to RTL via DPI
+- **MemoryScoreboard**: Validates responses against reference model
+- **MemoryTestScenario**: Executes comprehensive test cases
+
+### 4. UVM-ML Integration
+
+The UVM environment (`verification/uvm_ml/`) includes:
+
+- **mem_dpi_driver**: Drives transactions via DPI instead of generating random responses
+- **mem_enhanced_monitor**: Collects transactions with functional coverage
+- **mem_scoreboard**: Compares RTL responses with C reference model expectations
+- **Enhanced test sequences**: Smoke, stress, and edge case testing
+
+### 5. End-to-End Verification
+
+The complete flow connects:
+
+```
+UVM Test Sequences → UVM Driver → DPI Bridge → RTL Memory Module → DPI Bridge → UVM Monitor → UVM Scoreboard
+                                      ↘
+                                       C Reference Model (for golden reference)
+```
+
+## Test Results and Coverage
+
+### Functional Coverage
+
+The enhanced monitor collects coverage for:
+
+- **Operation Types**: Read, Write, TLB Load
+- **Address Ranges**: Low, mid, high memory regions
+- **Boundary Conditions**: Page boundaries, alignment
+- **Byte Masks**: Full, partial, single-byte operations
+- **Status Codes**: Success and error conditions
+- **Translation Scenarios**: Hit/miss patterns
+
+### Regression Categories
+
+#### Smoke Tests
+- Basic functionality validation
+- TLB load and read-after-write
+- Error handling verification
+
+#### Directed Tests
+- Boundary condition testing
+- Edge case validation
+- Translation miss scenarios
+
+#### Random Tests
+- Stress testing with random addresses
+- Long-duration random sequences
+- Corner case exploration
+
+### Coverage Goals
+
+- **Operation Coverage**: >95%
+- **Address Space Coverage**: >95%
+- **Boundary Condition Coverage**: >95%
+- **TLB Translation Coverage**: >95%
+
+## Build System
+
+### Top-Level Targets
 
 ```bash
-# Run basic RTL simulation
-make sim-rtl
-
-# Run SystemC model simulation
-make sim-models
-
-# Run full UVM verification
-make sim-uvm
-
-# Run co-simulation (RTL + SystemC)
-make sim-cosim
+make help           # Show all available targets
+make all           # Build everything
+make clean         # Remove build artifacts
+make distclean      # Deep clean including logs
 ```
 
-## Verification Methodology
+### Component-Specific Targets
 
-This project uses UVM-ML to enable:
-- **Multi-language verification**: SystemVerilog UVM components with SystemC models
-- **Transaction-level modeling**: High-level abstraction for early verification
-- **Reusable verification IP**: Portable verification components
-- **Coverage-driven verification**: Functional and code coverage metrics
+```bash
+make rtl            # Compile RTL designs
+make models        # Build SystemC/TLM models
+make models-dpi    # Build DPI-enabled models
+make verification  # Build UVM environment
+make c_reference   # Build C reference model
+```
 
-## Development Workflow
+### Simulation Targets
 
-1. **Design Phase**: Implement RTL designs in `rtl/` directory
-2. **Model Development**: Create reference models in `models/`
-3. **Verification Environment**: Develop UVM components in `verification/uvm_ml/`
-4. **Integration**: Connect components through common interfaces in `common/`
-5. **Validation**: Run simulations and analyze coverage
+```bash
+make sim-rtl       # Run RTL simulation
+make sim-models    # Run SystemC models
+make sim-uvm       # Run UVM verification
+make sim-cosim     # Run co-simulation
+```
+
+## Configuration
+
+### Memory Module Parameters
+
+The RTL memory module is configurable:
+
+```systemverilog
+module memory #(
+  parameter int VIRT_ADDR_WIDTH = 32,    // Virtual address width
+  parameter int PHYS_ADDR_WIDTH = 28,    // Physical address width
+  parameter int MEM_DEPTH = 16384,       // Memory depth in words
+  parameter int PAGE_SIZE = 4096,        // Page size in bytes
+  parameter int DATA_WIDTH = 64,         // Data word width
+  parameter int PT_ENTRIES = 256         // TLB entries
+) (
+  // Clock and reset
+  input  logic clk,
+  input  logic rst_n,
+  
+  // Read/write/TLB interfaces...
+);
+```
+
+### UVM Configuration
+
+UVM test configuration via command line:
+
+```bash
+# Set test verbosity
+make sim-uvm +UVM_VERBOSITY=UVM_HIGH
+
+# Set random seed
+make sim-uvm +UVM_TEST_SEED=12345
+
+# Enable coverage collection
+make sim-uvm +UVM_COVERAGE=1
+
+# Set timeout
+make sim-uvm +UVM_TIMEOUT_NS=10000000
+```
+
+## Debugging and Troubleshooting
+
+### Common Issues
+
+1. **SystemC Not Found**
+   ```bash
+   export SYSTEMC_HOME=/path/to/systemc
+   ```
+
+2. **DPI Compilation Errors**
+   - Ensure SystemVerilog compiler supports DPI
+   - Check that memory_dpi.c is compiled with compatible flags
+
+3. **UVM Test Failures**
+   - Check logs in `simulation/regression/logs/`
+   - Verify DPI bridge initialization
+   - Confirm RTL module compilation
+
+### Debug Options
+
+```bash
+# Enable waveform generation
+./scripts/run_regression.sh -w
+
+# Enable DPI tracing
+export UVM_DPI_TRACE=1
+
+# Enable verbose UVM output
+make sim-uvm +UVM_VERBOSITY=UVM_FULL
+```
+
+### Log Locations
+
+- **Build Logs**: `build/` directory
+- **Simulation Logs**: `simulation/` directory
+- **Regression Reports**: `simulation/regression/`
+- **Waveform Files**: `simulation/` (when enabled)
 
 ## Documentation
 
-- Design specifications are available in `docs/design/`
-- Verification plans and test results in `docs/verification/`
-- API documentation generated from source comments in `docs/api/`
+### API Documentation
+```bash
+make docs  # Generate Doxygen documentation
+```
 
-## Roadmap
-
-### Phase 1: Infrastructure Setup
-- [x] Basic repository structure
-- [x] Build system foundation
-- [ ] Basic RTL examples
-- [ ] Simple SystemC models
-
-### Phase 2: Verification Environment
-- [ ] UVM-ML integration
-- [ ] Basic agents and sequences
-- [ ] Reference models
-- [ ] Coverage collection
-
-### Phase 3: Advanced Features
-- [ ] Co-simulation framework
-- [ ] Power-aware verification
-- [ ] Performance analysis
-- [ ] Automated regression
+### Key Documentation Files
+- `UVM_ML_ENVIRONMENT_COMPLETE.md` - UVM-ML integration details
+- `models/tlm/README.md` - TLM architecture and usage
+- `verification/uvm_ml/README.md` - UVM component descriptions
 
 ## Contributing
 
-1. Follow existing directory structure and naming conventions
-2. Add appropriate documentation for new components
-3. Ensure all code compiles with the specified toolchain
-4. Update build system when adding new components
+### Development Workflow
+
+1. **Feature Branch**: Create branch for new features
+2. **Unit Tests**: Add/update unit tests for changes
+3. **Integration Tests**: Run full regression suite
+4. **Documentation**: Update relevant documentation
+5. **Code Review**: Submit pull request for review
+
+### Testing Requirements
+
+All changes must pass:
+- Quick validation test: `./scripts/quick_test.sh`
+- Full regression: `./scripts/run_regression.sh`
+- Coverage goals: >95% functional coverage
 
 ## License
 
-[Specify license type here]
+This project is provided as-is for educational and verification framework development purposes.
 
-## Contact
+## Support
 
-[Add contact information for project maintainers]
+For questions or issues:
+
+1. Check this README and documentation files
+2. Run `./scripts/quick_test.sh` to verify setup
+3. Examine build logs in `build/` directory
+4. Review simulation logs in `simulation/` directory
+
+---
+
+**Status**: Production Ready - Complete End-to-End Verification Flow  
+**Last Updated**: 2024  
+**Maintained By**: Verification Team
