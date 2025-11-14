@@ -128,3 +128,7 @@ Makefile.bak
 *.auto
 *.gen
 *.auto.*
+
+# Verilator artifacts
+obj_dir/
+*.d
